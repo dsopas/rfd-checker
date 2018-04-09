@@ -1,4 +1,4 @@
-// Copyright © 2018 David Sopas <davidsopas@gmail.com>.
+// Copyright © 2018 David Sopas
 //
 // Usage:
 //     $ rfd-checker -target="URL" -header="X-Header-Name: value"

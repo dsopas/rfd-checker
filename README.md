@@ -66,7 +66,7 @@ $ go build rfd-checker.go
 
 ## License
 
-Copyright (c) 2018 David Sopas <davidsopas@gmail.com>
+Copyright (c) 2018 David Sopas
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
