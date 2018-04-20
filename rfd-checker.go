@@ -46,10 +46,12 @@ func Usage () {
 
 // Common vulnerable query parameters
 var commonVulnParams = map[string]bool{
-    "callback": true,
-    "cb":       true,
-    "jsonp":    true,
-    "jsoncb":   true,
+    "callback":      true,
+    "cb":            true,
+    "jsonp":         true,
+    "jsoncb":        true,
+    "jsonpCallback": true,
+    "cback":         true,
 }
 
 type reqHeaders map[string]string
