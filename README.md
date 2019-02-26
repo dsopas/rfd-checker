@@ -1,10 +1,11 @@
 RFD Checker
 ===========
+[![GPL3](https://camo.githubusercontent.com/268d96c6dd81f1fff98b19675ef5867412a2a223/68747470733a2f2f696d672e736869656c64732e696f2f62616467652f6c6963656e73652d47504c332d627269676874677265656e2e7376673f7374796c653d666c61742d737175617265)](https://github.com/dsopas/rfd-checker/blob/master/LICENSE.md) [![Go Report Card](https://goreportcard.com/badge/github.com/dsopas/rfd-checker)](https://goreportcard.com/report/github.com/dsopas/rfd-checker)
 
 Command line security tool to check whether a given URL is vulnerable to RFD -
-Reflected File Download. This CLI tool was developed by David Sopas [@dsopas][1]
-and Paulo Silva [@pauloasilva_com][2] with the main purpose of validate and
-automate the search for RFD web attack vector.
+Reflected File Download. This tool was developed by David Sopas [@dsopas][1]
+and Paulo Silva [@pauloasilva_com][2] with the main purpose of validating and
+automating the search for the RFD web attack vector.
 
 ## Usage
 
