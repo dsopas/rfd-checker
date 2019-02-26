@@ -24,56 +24,56 @@
 package main
 
 import (
-    "bytes"
-    "flag"
-    "fmt"
-    "io/ioutil"
-    "net/http"
-    "net/url"
-    "os"
-    "path"
-    "strings"
-    "time"
+	"bytes"
+	"flag"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"strings"
+	"time"
 )
 
 // custom flag Usage message
-func Usage () {
-    fmt.Printf("RFD Checker (by @dsopas and @pauloasilva_com)\n\n")
-    fmt.Printf("Usage: %s -target=URL\n", os.Args[0])
-    fmt.Printf("Options:\n")
-    flag.PrintDefaults()
+func Usage() {
+	fmt.Printf("RFD Checker (by @dsopas and @pauloasilva_com)\n\n")
+	fmt.Printf("Usage: %s -target=URL\n", os.Args[0])
+	fmt.Printf("Options:\n")
+	flag.PrintDefaults()
 }
 
 // Common vulnerable query parameters
 var commonVulnParams = map[string]bool{
-    "callback":      true,
-    "cb":            true,
-    "jsonp":         true,
-    "jsoncb":        true,
-    "jsonpCallback": true,
-    "cback":         true,
+	"callback":      true,
+	"cb":            true,
+	"jsonp":         true,
+	"jsoncb":        true,
+	"jsonpCallback": true,
+	"cback":         true,
 }
 
 type reqHeaders map[string]string
 
 func (h reqHeaders) String() string {
-    return ""
+	return ""
 }
 
 func (h reqHeaders) Set(value string) error {
-    parts := strings.Split(value, ":")
+	parts := strings.Split(value, ":")
 
-    if len(parts) == 1 {
-        fmt.Fprintf(os.Stderr, "[WARN] Ignoring bad header \"%s\"...\n", value)
-        return nil
-    }
+	if len(parts) == 1 {
+		fmt.Fprintf(os.Stderr, "[WARN] Ignoring bad header \"%s\"...\n", value)
+		return nil
+	}
 
-    hName := strings.Trim(parts[0], " ")
-    hValue := strings.Trim(parts[1], " ")
+	hName := strings.Trim(parts[0], " ")
+	hValue := strings.Trim(parts[1], " ")
 
-    h[hName] = hValue
+	h[hName] = hValue
 
-    return nil
+	return nil
 }
 
 // Performs an HTTP GET request to `targetURL`, returning both the HTTP status
@@ -81,29 +81,29 @@ func (h reqHeaders) Set(value string) error {
 // Any internal error is returned as is with `nil` `response` and "000 Error"
 // status
 func request(targetURL string, headers reqHeaders) (string, []byte, error) {
-    tr := &http.Transport{IdleConnTimeout: 30 * time.Second}
-    client := &http.Client{Transport: tr}
+	tr := &http.Transport{IdleConnTimeout: 30 * time.Second}
+	client := &http.Client{Transport: tr}
 
-    req, err := http.NewRequest("GET", targetURL, nil)
+	req, err := http.NewRequest("GET", targetURL, nil)
 
-    if err != nil {
-        return "000 Error", nil, err
-    }
+	if err != nil {
+		return "000 Error", nil, err
+	}
 
-    for k, v := range headers {
-        req.Header.Add(k, v)
-    }
+	for k, v := range headers {
+		req.Header.Add(k, v)
+	}
 
-    resp, err := client.Do(req)
-    defer resp.Body.Close()
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
 
-    body, err := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 
-    if err != nil {
-        return "000 Error", nil, err
-    }
+	if err != nil {
+		return "000 Error", nil, err
+	}
 
-    return resp.Status, body, nil
+	return resp.Status, body, nil
 }
 
 // Tests whether given query string paramenter `pName` from `oURL` URL is
@@ -111,104 +111,104 @@ func request(targetURL string, headers reqHeaders) (string, []byte, error) {
 // Any internal error is returned as is and should be handled by calling
 // function
 func testQueryParameter(pName string, oURL string, h reqHeaders) (bool, error) {
-    tempURL, err := url.Parse(oURL)
+	tempURL, err := url.Parse(oURL)
 
-    if err != nil {
-        return false, err
-    }
+	if err != nil {
+		return false, err
+	}
 
-    q := tempURL.Query()
-    if commonVulnParams[pName] {
-        q.Set(pName, "calc||")
-    } else {
-        q.Set(pName, "\"||calc||")
-    }
+	q := tempURL.Query()
+	if commonVulnParams[pName] {
+		q.Set(pName, "calc||")
+	} else {
+		q.Set(pName, "\"||calc||")
+	}
 
-    tempURL.RawQuery = q.Encode()
+	tempURL.RawQuery = q.Encode()
 
-    status, body, err := request(tempURL.String(), h)
+	status, body, err := request(tempURL.String(), h)
 
-    if status != "200 OK" {
-        return false, err
-    }
+	if status != "200 OK" {
+		return false, err
+	}
 
-    return strings.Contains(string(body), "calc"), nil
+	return strings.Contains(string(body), "calc"), nil
 }
 
 func main() {
-    var exitCode int = 0
+	var exitCode int = 0
 
-    var targetURL string
-    var targetHeaders reqHeaders = make(reqHeaders)
+	var targetURL string
+	var targetHeaders reqHeaders = make(reqHeaders)
 
-    var permissiveParams []string
-    var permissiveURL string = "no"
+	var permissiveParams []string
+	var permissiveURL string = "no"
 
-    defer func() {
-        os.Exit(exitCode)
-    }()
+	defer func() {
+		os.Exit(exitCode)
+	}()
 
-    flag.Usage = Usage
+	flag.Usage = Usage
 
-    flag.StringVar(&targetURL, "target", "", "Target URL")
-    flag.Var(&targetHeaders, "header",
-        "Request header e.g. \"Cookie: SESSID=a16fb\"")
+	flag.StringVar(&targetURL, "target", "", "Target URL")
+	flag.Var(&targetHeaders, "header",
+		"Request header e.g. \"Cookie: SESSID=a16fb\"")
 
-    flag.Parse()
+	flag.Parse()
 
-    if targetURL == "" {
-        fmt.Fprintf(os.Stderr, "Missing option -target <URL>\n")
-        exitCode = 1
+	if targetURL == "" {
+		fmt.Fprintf(os.Stderr, "Missing option -target <URL>\n")
+		exitCode = 1
 
-        return
-    }
+		return
+	}
 
-    u, err := url.Parse(targetURL)
-    if err != nil {
-        fmt.Fprintf(os.Stderr, "Invalid -target option value\n")
-        exitCode = 2
+	u, err := url.Parse(targetURL)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid -target option value\n")
+		exitCode = 2
 
-        return
-    }
+		return
+	}
 
-    // find permissive query parameters
-    parameters := u.Query()
-    for k := range parameters {
-        isPermissive, err := testQueryParameter(k, targetURL, targetHeaders)
+	// find permissive query parameters
+	parameters := u.Query()
+	for k := range parameters {
+		isPermissive, err := testQueryParameter(k, targetURL, targetHeaders)
 
-        if err == nil && isPermissive {
-            permissiveParams = append(permissiveParams, k)
-        }
-    }
+		if err == nil && isPermissive {
+			permissiveParams = append(permissiveParams, k)
+		}
+	}
 
-    // test url permissiveness
-    dir, filename := path.Split(u.Path)
+	// test url permissiveness
+	dir, filename := path.Split(u.Path)
 
-    if filename == "" {
-        filename = "setup.bat"
-    } else {
-        if strings.Contains(filename, ".") {
-            filename = filename + ".bat"
-        } else {
-            filename = filename + ";setup.bat"
-        }
-    }
+	if filename == "" {
+		filename = "setup.bat"
+	} else {
+		if strings.Contains(filename, ".") {
+			filename = filename + ".bat"
+		} else {
+			filename = filename + ";setup.bat"
+		}
+	}
 
-    u.Path = path.Join(dir, filename)
+	u.Path = path.Join(dir, filename)
 
-    // test whether requesting the original URL and the modified one return the
-    // successfully with the same response body
-    oStatus, oBody, err := request(targetURL, targetHeaders)
-    tStatus, tBody, err := request(u.String(), targetHeaders)
-    if oStatus == "200 OK" && tStatus == "200 OK" && bytes.Equal(tBody, oBody) {
-        permissiveURL = u.String()
-    }
+	// test whether requesting the original URL and the modified one return the
+	// successfully with the same response body
+	oStatus, oBody, err := request(targetURL, targetHeaders)
+	tStatus, tBody, err := request(u.String(), targetHeaders)
+	if oStatus == "200 OK" && tStatus == "200 OK" && bytes.Equal(tBody, oBody) {
+		permissiveURL = u.String()
+	}
 
-    permissiveParamsCSV := strings.Join(permissiveParams[:], ",")
+	permissiveParamsCSV := strings.Join(permissiveParams[:], ",")
 
-    fmt.Printf("Target URL: %s\n", targetURL)
-    fmt.Printf("Permissive query parameters: %v\n", permissiveParamsCSV)
-    fmt.Printf("Permissive URL: %v\n", permissiveURL)
+	fmt.Printf("Target URL: %s\n", targetURL)
+	fmt.Printf("Permissive query parameters: %v\n", permissiveParamsCSV)
+	fmt.Printf("Permissive URL: %v\n", permissiveURL)
 }
 
 // vim: set ts=4 sw=4 et :
